@@ -1,0 +1,206 @@
+Tentang
+
+Pencarian Earthdata adalah aplikasi web yang dikembangkan oleh NASA EOSDIS untuk memungkinkan penemuan, pencarian, perbandingan, visualisasi, dan akses data di seluruh kepemilikan data Ilmu Bumi EOSDIS. Hal ini dibangun berdasarkan beberapa layanan publik yang menghadap disediakan oleh EOSDIS, termasuk Metadata Repository Umum (CMR) untuk penemuan data dan akses, EOSDIS Registrasi Pengguna System (URS) otentikasi, yang global Citra People Services (Gibs) untuk visualisasi, dan sejumlah Layanan OPeNDAP dihosting oleh penyedia data.
+
+Lisensi
+
+Hak Cipta © 2007-2019 Pemerintah Amerika Serikat yang diwakili oleh Administrator Badan Penerbangan dan Antariksa Nasional. Seluruh hak cipta.
+
+Dilisensikan di bawah Lisensi Apache, Versi 2.0 ("Lisensi"); Anda tidak boleh menggunakan file ini kecuali sesuai dengan Lisensi. Anda dapat memperoleh salinan Lisensi di
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Kecuali diwajibkan oleh hukum yang berlaku atau disetujui secara tertulis, perangkat lunak yang didistribusikan di bawah Lisensi didistribusikan dengan DASAR "SEBAGAIMANA ADANYA", TANPA JAMINAN ATAU KETENTUAN APA PUN, baik tersurat maupun tersirat. Lihat Lisensi untuk bahasa tertentu yang mengatur izin dan batasan berdasarkan Lisensi.
+
+Instalasi dan Penggunaan Aplikasi
+
+Aplikasi Pencarian Earthdata menggunakan Node v12.16.3 dan Webpack 4.39.3 untuk menghasilkan aset statis. Aplikasi tanpa server menggunakan layanan AWS berikut (penting untuk diperhatikan jika menerapkan ke lingkungan AWS):
+
+S3
+
+Kami sangat merekomendasikan menggunakan CloudFront di depan S3.
+
+SQS
+API Gateway
+Lambda
+Cloudwatch (Acara)
+Prasyarat
+Node
+
+Pencarian Earthdata berjalan di Node.js, untuk menjalankan aplikasi Anda harus menginstalnya .
+
+Direkomendasikan: Gunakan Homebrew
+
+brew install node
+
+NPM
+
+npm adalah proyek terpisah dari Node.js, dan cenderung lebih sering diperbarui. Akibatnya, meskipun Anda baru saja mengunduh Node.js (dan karenanya npm), Anda mungkin perlu memperbarui npm Anda. Untungnya, npm tahu cara memperbarui dirinya sendiri! Untuk memperbarui npm Anda, ketik ini ke terminal Anda:
+
+npm install -g npm@latest
+
+NVM
+
+Untuk memastikan bahwa Anda menggunakan versi Node yang benar, disarankan agar Anda menggunakan Node Version Manager. Petunjuk penginstalan dapat ditemukan di repositori . Versi yang digunakan didefinisikan dalam .nvmrc dan akan digunakan secara otomatis jika NVM dikonfigurasi dengan benar.
+
+Kerangka Tanpa Server
+
+Pencarian Earthdata menggunakan Kerangka Kerja Tanpa Server untuk mengelola sumber daya AWS. Untuk menjalankan dan mengelola aplikasi sepenuhnya, Anda harus menginstalnya:
+
+npm install -g serverless@latest
+
+PostgreSQL
+
+Pencarian Earthdata menggunakan PostgreSQL dalam produksi di AWS RDS. Jika Anda belum menginstalnya, unduh dan instal ke lingkungan pengembangan Anda.
+
+Direkomendasikan: Gunakan Homebrew
+
+brew install postgresql
+
+Jika Anda memutuskan untuk menginstal melalui Homebrew, Anda harus membuat pengguna default.
+
+/usr/local/opt/postgres/bin/createuser -s postgres
+
+Pengaturan awal
+
+Instalasi Paket
+
+Setelah npm diinstal secara lokal, Anda perlu mendownload dependensi dengan menjalankan perintah di bawah ini di direktori root project:
+
+npm install
+Konfigurasi
+Rahasia
+
+Untuk pengembangan lokal, Pencarian Earthdata menggunakan file konfigurasi json untuk menyimpan file aman, sebuah contoh disediakan dan harus disalin dan diselesaikan sebelum mencoba melangkah lebih jauh.
+
+cp secret.config.json.example secret.config.json
+
+Dalam rangka untuk mengoperasikan terhadap database lokal file ini perlu dbUsernamedan dbPasswordnilai-nilai set (Anda mungkin perlu memperbarui dbHost, dbNameatau dbPortdi static.config.jsonjika Anda memiliki konfigurasi kustom lokal)
+
+Publik (Tidak Aman)
+
+Nilai tidak aman disimpan di static.config.json. Untuk mencegah konflik di antara pengembang, Anda menyalin konfigurasi statis ke overrideStatic.config.jsondan mengubah nilai konfigurasi di sana. Jangan lakukan perubahan ke static.config.json.
+
+cp static.config.json overrideStatic.config.json
+
+Migrasi Database
+
+Pastikan Anda memiliki database yang dibuat:
+
+createdb edsc_dev
+
+Migrasi database kami berjalan dalam Lambda karena fakta bahwa di lingkungan non-pengembangan, sumber daya kami tidak dapat diakses publik. Untuk menjalankan migrasi, Anda harus memanggil Lambda:
+
+serverless invoke local --function migrateDatabase
+
+Membangun Aplikasi
+
+Build produksi aplikasi akan ditampilkan di /static/dist/direktori:
+
+npm run build
+
+Jalankan Aplikasi Secara Lokal
+Lingkungan pengembangan lokal untuk aset statis dapat dimulai dengan menjalankan perintah di bawah ini di direktori root project:
+
+npm run start
+
+Ini akan menjalankan aplikasi React di http: // localhost: 8080 - lihat di Serverless Frameworkbawah untuk mengaktifkan fungsionalitas sisi 'server'.
+
+Kerangka Tanpa Server
+
+The kerangka serverless penawaran banyak plugin yang memungkinkan untuk pembangunan daerah memanfaatkan banyak layanan AWS penawaran. Untuk sebagian besar kita hanya memerlukan API Gateway dan Lambda untuk aplikasi ini, tetapi ada plugin untuk lebih banyak layanan (daftar pengecualian yang diketahui akan dipertahankan di bawah).
+
+Pengecualian
+SQS
+
+Meskipun ada plugin sqs-offline untuk tanpa server, itu masih membutuhkan antrian yang sebenarnya untuk berjalan, kami dapat menyelidiki ini di masa depan tetapi untuk saat ini fungsionalitas sqs tidak tersedia saat mengembangkan secara lokal yang berarti bagian fungsionalitas berikut tidak akan beroperasi secara lokal:
+
+Menghasilkan Colormaps
+
+Menjalankan API Gateway dan Lambda Secara Lokal
+
+Menjalankan perintah berikut akan menjalankan API Gateway dan Lambda secara lokal yang akan membuka sebagian besar fungsionalitas yang ditawarkan backend.
+
+serverless offline
+Ini akan memberikan akses ke API Gateway di http: // localhost: 3001
+
+Selain itu, ini terkait dengan serverless webpack plugin yang akan memastikan bahwa lambda Anda dibangun kembali ketika perubahan terdeteksi.
+
+Jalankan Automated tes Jest
+Setelah proyek dibuat, Anda harus memastikan bahwa pengujian unit otomatis lulus:
+
+npm run test
+
+Jalankan Automated tes Cypress
+Anda juga harus memastikan bahwa pengujian integrasi otomatis lulus:
+
+npm run cypress:run
+
+Anda juga dapat menggunakan GUI Cypress dengan:
+
+npm run cypress:open
+
+Konfigurasi
+
+Rahasia Cypress
+
+Saat menambahkan tes Cypress baru, Anda perlu mengubah file secret.config.json. Anda perlu mengedit objek "cypress" untuk memasukkan data dari database lokal Anda:
+
+"cypress": {
+    "user": {
+    "id": 1, // This should match the ID of your user in the 'users' database table
+    "username": "your username here" // Replace with the urs_id field of your user in the 'users' database table
+    }
+}
+
+Penyebaran
+
+Saat tiba waktunya untuk menerapkan aplikasi, pertama-tama pastikan bahwa Anda telah menyetel vars ENV yang diperlukan:
+
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+
+Aplikasi ini berjalan di VPC untuk tujuan keamanan NASA, oleh karena itu nilai berikut diharapkan saat penerapan terjadi:
+
+VPC_ID
+SUBNET_ID_A
+SUBNET_ID_B
+
+Untuk penggunaan produksi, aplikasi ini menggunakan Scatter Swap untuk mengaburkan beberapa ID - pustaka tidak memerlukan nilai yang diberikan, tetapi jika Anda ingin mengontrolnya, Anda dapat menyetel vars ENV berikut:
+
+OBFUSCATION_SPIN
+OBFUSCATION_SPIN_SHAPEFILES
+
+Untuk menyebarkan aplikasi lengkap gunakan yang berikut ini:
+
+NODE_ENV=production serverless deploy --stage UNIQUE_STAGE
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+NODE_ENV=production serverless deploy --stage UNIQUE_STAGE
